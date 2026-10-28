@@ -4,7 +4,7 @@ CherryQuant 面向有交易经验但不会编程的普通 A 股投资者，帮�
 
 ## 当前状态
 
-仓库已完成 M0，并有一个不依赖 UI、网络或外部数据源的 M1 确定性实验引擎。当前仍没有界面、真实行情接入或实盘能力；任何合成数据收益都不能被视为已验证的策略表现。
+仓库已完成 M0、M1 和 M2 的确定性实验闭环，并增加了 M3 的自然语言策略草稿纵向切片：用户描述想法，模型（或离线 mock provider）生成结构化候选，用户选择并确认后才交给 M1 引擎运行。当前仍只使用 `demo-synthetic` 合成数据，未接入真实行情、持久化、实盘或自动下单；任何合成数据收益都不能被视为已验证的策略表现。
 
 ## MVP 闭环
 
@@ -17,8 +17,8 @@ CherryQuant 面向有交易经验但不会编程的普通 A 股投资者，帮�
 ## 目录
 
 ```text
-apps/web/             前端（M2 建立）
-apps/api/             HTTP/API 层（M2 建立）
+apps/web/             前端（M2/M3 自然语言工作台）
+apps/api/             HTTP/API 层（M2/M3 草稿与确认接口）
 packages/engine/      M1 规则、指标、事件和成交模拟
 contracts/            跨层数据契约与示例
 fixtures/             可人工核对的合成数据和黄金样本
@@ -32,7 +32,7 @@ docs/decisions/       可追溯的产品与工程决策
 1. M0：仓库、契约、范围和交易假设。
 2. M1：不依赖 UI 的可核验引擎与合成数据。
 3. M2：数据选择、规则卡片、运行、K 线和逐日解释（当前已提供 API 和无构建依赖演示页）。
-4. M3：版本、修改理由、受控比较、保存恢复和检验区间记录。
+4. M3：自然语言草稿、结构化校验、用户确认后编译到 M1；版本、修改理由、受控比较、保存恢复仍待补齐。
 5. M4：小范围受控试用，区分软件理解问题、数据问题和策略问题。
 
 每个阶段必须有可复核的完成门槛；“页面看起来完成”不等于计算可信。
@@ -56,6 +56,7 @@ docs/decisions/       可追溯的产品与工程决策
 ## 文档入口
 
 - [MVP 交接文档](docs/handoff/cherryquant-mvp-handoff-2026-10-29.md)
+- [M3 自然语言纵向切片](docs/m3-natural-language.md)
 - [MVP 范围决策](docs/decisions/0001-mvp-scope.md)
 - [交易语义决策](docs/decisions/0002-trading-semantics.md)
 - [开发计划与节奏](docs/development-plan.md)
@@ -118,6 +119,17 @@ python -m pip install -e packages/engine
 python -m pip install -e apps/api
 uvicorn cherryquant_api.app:app --reload --port 8000
 ```
+
+要启用兼容 OpenAI `chat/completions` 的语言模型 provider，请先在同一个终端注入本地环境变量（不要把 key 写入仓库）：
+
+```powershell
+$env:CHERRYQUANT_LLM_PROVIDER = "auto"
+$env:JACKBUDDY_BASE_URL = "https://jackbuddy.xin/v1"
+$env:JACKBUDDY_API_KEY = "本机环境变量中的 key"
+# 可选：$env:JACKBUDDY_MODEL = "服务端模型名"
+```
+
+没有 key 时会自动使用 mock provider；浏览器不会接触模型密钥。仓库根目录的 `.env.example` 只有空占位符，可复制为本地配置参考。
 
 另开终端：
 

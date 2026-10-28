@@ -23,6 +23,11 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from .compiler import StrategyCompileError, compile_candidate, compiled_card
+from .config import load_llm_config
+from .llm_provider import LLMProviderError, get_strategy_provider
+from .strategy_ir import DraftEnvelope
+
 
 class ConditionCard(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -79,6 +84,22 @@ class RunRequest(BaseModel):
     config: ExperimentConfigCard = Field(default_factory=ExperimentConfigCard)
 
 
+class StrategyDraftRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    prompt: str = Field(min_length=8, max_length=4000)
+    dataset_id: Literal["demo-synthetic"] = "demo-synthetic"
+    symbol: str = "600000.SH"
+    candidate_count: int = Field(default=3, ge=1, le=3)
+
+
+class StrategyDraftConfirmRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    candidate_id: str = Field(min_length=1, max_length=64)
+    config: ExperimentConfigCard = Field(default_factory=ExperimentConfigCard)
+
+
 @dataclass(frozen=True)
 class StoredRun:
     run_id: str
@@ -86,6 +107,14 @@ class StoredRun:
     snapshot: DataSnapshot
     strategy: StrategySpec
     result: Any
+
+
+@dataclass(frozen=True)
+class StoredDraft:
+    draft_id: str
+    dataset_id: str
+    prompt: str
+    envelope: DraftEnvelope
 
 
 def _repo_root() -> Path:
@@ -179,7 +208,7 @@ def dataset_metadata(snapshot: DataSnapshot) -> dict[str, Any]:
 
 
 def create_app() -> FastAPI:
-    api = FastAPI(title="CherryQuant M2 API", version="0.2.0")
+    api = FastAPI(title="CherryQuant Natural Language Strategy API", version="0.3.0")
     api.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -188,11 +217,19 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     runs: dict[str, StoredRun] = {}
+    drafts: dict[str, StoredDraft] = {}
     snapshot = load_demo_snapshot()
 
     @api.get("/health")
-    def health() -> dict[str, str]:
-        return {"status": "ok", "engine": "m1.0", "api": "m2"}
+    def health() -> dict[str, Any]:
+        config = load_llm_config()
+        return {
+            "status": "ok",
+            "engine": "m1.0",
+            "api": "m3-natural-language",
+            "llm_provider": get_strategy_provider().name,
+            "llm": config.public_summary(),
+        }
 
     @api.get("/v1/datasets/demo")
     def demo_dataset() -> dict[str, Any]:
@@ -223,6 +260,54 @@ def create_app() -> FastAPI:
                 "observe": "日线收盘后观察",
                 "execute": "下一交易日开盘尝试成交",
             },
+        }
+
+    @api.post("/v1/strategy-drafts")
+    def create_strategy_draft(request: StrategyDraftRequest) -> dict[str, Any]:
+        provider = get_strategy_provider()
+        context = {
+            "dataset_id": request.dataset_id,
+            "symbol": request.symbol,
+            "frequency": "1d",
+            "visible_range": [snapshot.research_start, snapshot.research_end],
+            "candidate_count": request.candidate_count,
+        }
+        try:
+            envelope = provider.generate(request.prompt, context)
+        except LLMProviderError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+        candidates = envelope.candidates[: request.candidate_count]
+        envelope = envelope.model_copy(update={"candidates": candidates})
+        draft_id = envelope.request_id
+        drafts[draft_id] = StoredDraft(draft_id, request.dataset_id, request.prompt, envelope)
+        return {"draft_id": draft_id, "source": provider.name, "draft": envelope.model_dump(mode="json")}
+
+    @api.get("/v1/strategy-drafts/{draft_id}")
+    def get_strategy_draft(draft_id: str) -> dict[str, Any]:
+        stored = _get_draft(drafts, draft_id)
+        return {"draft_id": stored.draft_id, "dataset_id": stored.dataset_id, "draft": stored.envelope.model_dump(mode="json")}
+
+    @api.post("/v1/strategy-drafts/{draft_id}/confirm")
+    def confirm_strategy_draft(draft_id: str, request: StrategyDraftConfirmRequest) -> dict[str, Any]:
+        stored = _get_draft(drafts, draft_id)
+        candidate = next((item for item in stored.envelope.candidates if item.id == request.candidate_id), None)
+        if candidate is None:
+            raise HTTPException(status_code=404, detail=f"unknown candidate: {request.candidate_id}")
+        try:
+            strategy = compile_candidate(candidate)
+        except StrategyCompileError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        config = config_from_card(request.config)
+        run_snapshot = snapshot.for_scope("research")
+        result = run_experiment(run_snapshot, strategy, config)
+        run_id = uuid4().hex
+        runs[run_id] = StoredRun(run_id, stored.dataset_id, run_snapshot, strategy, result)
+        return {
+            "draft_id": draft_id,
+            "candidate": candidate.model_dump(mode="json"),
+            "compiled_strategy": compiled_card(candidate, strategy),
+            "run_id": run_id,
+            "result": result.to_dict(),
         }
 
     @api.post("/v1/runs")
@@ -265,6 +350,13 @@ def _get_run(runs: dict[str, StoredRun], run_id: str) -> StoredRun:
     stored = runs.get(run_id)
     if stored is None:
         raise HTTPException(status_code=404, detail=f"unknown run: {run_id}")
+    return stored
+
+
+def _get_draft(drafts: dict[str, StoredDraft], draft_id: str) -> StoredDraft:
+    stored = drafts.get(draft_id)
+    if stored is None:
+        raise HTTPException(status_code=404, detail=f"unknown strategy draft: {draft_id}")
     return stored
 
 

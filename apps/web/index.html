@@ -3,106 +3,102 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>CherryQuant · M2 规则实验</title>
+    <meta name="description" content="CherryQuant 自然语言策略工作台" />
+    <title>CherryQuant · 策略工作台</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="shell">
-      <header class="hero">
-        <div>
-          <p class="eyebrow">CHERRYQUANT / M2</p>
-          <h1>把一条交易想法跑清楚</h1>
-          <p class="subtitle">规则由你确认，计算由确定性引擎完成。当前使用演示合成数据，保留区间保持锁定。</p>
+      <header class="topbar">
+        <a class="brand" href="./">
+          <span class="brand-mark">CQ</span>
+          <span><strong>CherryQuant</strong><small>Strategy workspace</small></span>
+        </a>
+        <div class="top-meta">
+          <span id="connection" class="status-pill">连接中…</span>
+          <span id="api-endpoint" class="endpoint"></span>
         </div>
-        <div id="connection" class="status-pill">连接中…</div>
       </header>
 
-      <section class="grid two-columns">
-        <article class="panel">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">M3 · NATURAL LANGUAGE WORKBENCH</p>
+          <h1>把交易想法说出来，<em>先看清再运行。</em></h1>
+          <p class="hero-copy">候选规则可以由可替换的语言模型 provider 生成，但是否执行、如何成交和每个解释，都由你确认后的确定性引擎负责。</p>
+        </div>
+        <div class="hero-note"><span class="note-dot"></span><span>演示数据 · 研究区间可见<br /><strong>保留检验区间保持锁定</strong></span></div>
+      </section>
+
+      <section class="workspace-grid">
+        <article class="panel composer-panel">
           <div class="panel-heading">
-            <div>
-              <p class="eyebrow">RULE CARD</p>
-              <h2>规则卡片</h2>
-            </div>
-            <span id="dataset-note" class="muted">读取数据中…</span>
+            <div><p class="eyebrow">01 / DESCRIBE</p><h2>描述你的方法</h2></div>
+            <span class="step-label">自然语言草稿</span>
           </div>
-          <form id="strategy-form">
-            <label>版本 ID<input name="version_id" value="web-v1" required /></label>
-            <div class="form-row">
-              <label>入场条件
-                <select name="entry_type">
-                  <option value="close_above_sma">收盘价高于均线</option>
-                  <option value="close_crosses_above_sma">收盘价上穿均线</option>
-                </select>
-              </label>
-              <label>均线周期<input name="entry_period" type="number" min="1" value="2" required /></label>
-            </div>
-            <div class="form-row">
-              <label>退出条件
-                <select name="exit_type">
-                  <option value="close_below_sma">收盘价低于均线</option>
-                  <option value="close_crosses_below_sma">收盘价下穿均线</option>
-                </select>
-              </label>
-              <label>均线周期<input name="exit_period" type="number" min="1" value="2" required /></label>
-            </div>
-            <div class="form-row">
-              <label>资金使用比例<input name="position_fraction" type="number" min="0.01" max="1" step="0.01" value="0.5" required /></label>
-              <label>最小交易手数<input name="lot_size" type="number" min="1" step="1" value="100" required /></label>
-            </div>
-            <label class="checkbox"><input name="confirmed" type="checkbox" /> 我已确认系统将按“收盘观察、下一交易日开盘尝试成交”执行</label>
-            <div class="actions">
-              <button id="validate-button" type="button" class="secondary">检查规则</button>
-              <button id="run-button" type="submit">运行实验</button>
-            </div>
-          </form>
-          <div id="rule-feedback" class="feedback muted">填写规则后先检查，再运行。</div>
+          <label class="prompt-label" for="strategy-prompt">你想验证什么？</label>
+          <textarea id="strategy-prompt" rows="7" placeholder="例如：我想验证一只股票在收盘站上中期均线后买入，跌破均线后退出，先用固定仓位看看它如何运行。">我想验证一只股票在收盘站上中期均线后买入，跌破均线后退出，先用固定仓位看看它如何运行。</textarea>
+          <div class="prompt-footer"><span id="prompt-count">0 / 4000</span><span>只描述想法，不要粘贴密钥或账户信息。</span></div>
+          <div class="field-grid">
+            <label>标的<input id="symbol" value="600000.SH" autocomplete="off" /></label>
+            <label>候选数量<select id="candidate-count"><option value="3">3 个候选</option><option value="2">2 个候选</option><option value="1">1 个候选</option></select></label>
+          </div>
+          <button id="generate-button" class="primary-button" type="button"><span class="button-icon">✦</span>生成候选规则</button>
+          <div class="quick-prompts">
+            <span>试试：</span>
+            <button type="button" data-prompt="收盘价连续站上短期均线后买入，跌破同一均线后退出。">均线跟随</button>
+            <button type="button" data-prompt="我想检查一个更保守的趋势确认规则，减少横盘时的反复交易。">保守趋势</button>
+            <button type="button" data-prompt="比较短期上穿均线和中期站上均线，看看它们的交易差异。">比较两种节奏</button>
+          </div>
+          <div class="guardrail"><span class="guardrail-icon">i</span><span>候选只是结构化草稿。确认前不会运行；当前引擎只支持有限的日线条件，不会把未支持的能力伪装成可执行规则。</span></div>
         </article>
 
-        <article class="panel">
+        <article class="panel candidates-panel">
           <div class="panel-heading">
-            <div>
-              <p class="eyebrow">RUN SUMMARY</p>
-              <h2>实验结果</h2>
-            </div>
-            <span id="run-id" class="muted">尚未运行</span>
+            <div><p class="eyebrow">02 / REVIEW</p><h2>候选规则</h2></div>
+            <span id="draft-meta" class="step-label">等待生成</span>
           </div>
-          <div id="summary" class="summary-grid empty-state">运行后显示摘要</div>
-          <div class="lock-note"><span>研究区间</span><strong id="research-range">—</strong><span class="lock">保留区间已锁定</span><strong id="holdout-range">—</strong></div>
+          <div id="clarifications" class="clarifications" hidden></div>
+          <div id="candidate-list" class="candidate-list empty-state"><div><span class="empty-icon">◌</span><strong>还没有候选规则</strong><p>先描述你的想法，再让工作台给出可核对的结构化版本。</p></div></div>
         </article>
       </section>
 
-      <section class="panel chart-panel">
+      <section id="confirm-panel" class="panel confirm-panel" hidden>
         <div class="panel-heading">
-          <div>
-            <p class="eyebrow">PRICE &amp; DECISIONS</p>
-            <h2>K 线 / 决策联动</h2>
-          </div>
-          <span class="muted">标记来自同一次运行的 DecisionTrace</span>
+          <div><p class="eyebrow">03 / CONFIRM</p><h2>确认并运行</h2></div>
+          <span class="step-label warning">确认后才会调用引擎</span>
         </div>
-        <svg id="chart" viewBox="0 0 900 300" role="img" aria-label="收盘价和决策标记"></svg>
-        <div class="legend"><span><i class="dot entry"></i>入场信号</span><span><i class="dot exit"></i>退出信号</span><span><i class="dot fill"></i>成交日</span></div>
+        <div class="confirm-layout">
+          <div id="selected-summary" class="selected-summary"></div>
+          <div class="config-card">
+            <p class="config-title">运行假设</p>
+            <div class="field-grid compact">
+              <label>初始资金<input id="initial-cash" value="100000" inputmode="decimal" /></label>
+              <label>佣金率<input id="commission-rate" value="0.0003" inputmode="decimal" /></label>
+              <label>最低佣金<input id="min-commission" value="5" inputmode="decimal" /></label>
+              <label>印花税率<input id="stamp-duty-rate" value="0.001" inputmode="decimal" /></label>
+            </div>
+            <label class="confirm-check"><input id="confirm-checkbox" type="checkbox" /> 我确认按“收盘观察、下一交易日开盘尝试成交”运行这条规则。</label>
+            <button id="run-button" class="primary-button" type="button" disabled>确认并运行实验</button>
+          </div>
+        </div>
       </section>
 
-      <section class="panel">
-        <div class="panel-heading">
-          <div>
-            <p class="eyebrow">DECISION TRACE</p>
-            <h2>逐日解释</h2>
-          </div>
-          <span class="muted">无信号日期也会保留判断状态</span>
+      <section id="results-section" hidden>
+        <div class="results-heading">
+          <div><p class="eyebrow">04 / INSPECT</p><h2>运行结果</h2><p id="run-context" class="muted"></p></div>
+          <span id="run-id" class="run-id">尚未运行</span>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>日期</th><th>入场条件</th><th>退出条件</th><th>信号</th><th>订单/成交</th><th>解释</th></tr></thead>
-            <tbody id="trace-table"><tr><td colspan="6" class="empty-state">运行后显示逐日记录</td></tr></tbody>
-          </table>
+        <div class="result-grid">
+          <article class="panel summary-panel"><div id="summary" class="summary-grid"></div><div class="range-row"><span>研究区间</span><strong id="research-range">—</strong><span class="lock-label">锁定检验区间</span><strong id="holdout-range">—</strong></div></article>
+          <article class="panel trace-focus"><p class="eyebrow">GROUNDING</p><h3>解释来自同一次运行</h3><p>图表、订单和逐日条件判断都读取已保存的 DecisionTrace，不在浏览器里重算收益，也不让模型编造理由。</p><div class="trace-key"><span class="key-entry">入场信号</span><span class="key-exit">退出信号</span><span class="key-fill">成交日</span></div></article>
         </div>
+        <article class="panel chart-panel"><div class="panel-heading"><div><p class="eyebrow">PRICE &amp; DECISIONS</p><h2>K 线 / 决策联动</h2></div><span class="muted">当前展示研究区间</span></div><svg id="chart" viewBox="0 0 900 300" role="img" aria-label="收盘价和决策标记"></svg></article>
+        <article class="panel trace-panel"><div class="panel-heading"><div><p class="eyebrow">DECISION TRACE</p><h2>逐日解释</h2></div><span class="muted">无信号日期也会保留判断状态</span></div><div class="table-wrap"><table><thead><tr><th>日期</th><th>入场</th><th>退出</th><th>信号</th><th>订单</th><th>解释</th></tr></thead><tbody id="trace-table"><tr><td colspan="6" class="empty-state">运行后显示逐日记录</td></tr></tbody></table></div></article>
       </section>
 
       <div id="error" class="error" hidden></div>
+      <footer><span>CherryQuant · M3 vertical slice</span><span>规则由你确认，计算由确定性引擎完成。</span></footer>
     </main>
     <script src="app.js" type="module"></script>
   </body>
 </html>
-

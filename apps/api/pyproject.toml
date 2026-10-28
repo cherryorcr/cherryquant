@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cherryquant-api"
-version = "0.2.0"
-description = "M2 HTTP API for CherryQuant rule experiments."
+version = "0.3.0"
+description = "CherryQuant natural-language strategy drafting and deterministic experiment API."
 requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.115,<1",

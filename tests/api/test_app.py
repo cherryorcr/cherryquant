@@ -19,11 +19,15 @@ def strategy_payload(*, confirmed: bool = True) -> dict[str, object]:
     }
 
 
-def test_health_and_demo_dataset() -> None:
+def test_health_and_demo_dataset(monkeypatch) -> None:
+    monkeypatch.delenv("JACKBUDDY_API_KEY", raising=False)
+    monkeypatch.delenv("CHERRYQUANT_LLM_PROVIDER", raising=False)
     health = client.get("/health")
     dataset = client.get("/v1/datasets/demo")
     assert health.status_code == 200
     assert health.json()["engine"] == "m1.0"
+    assert health.json()["llm"]["api_key_configured"] is False
+    assert "api_key" not in health.json()["llm"]
     assert dataset.status_code == 200
     assert dataset.json()["dataset_id"] == "demo-synthetic"
     assert dataset.json()["bar_count"] == 5
