@@ -1,0 +1,13 @@
+[
+  {
+    "code": "sh.600000",
+    "date": "20260430",
+    "open": "10.00",
+    "high": "11.00",
+    "low": "10.00",
+    "close": "11.00",
+    "preclose": "10.00",
+    "provenance": "small schema fixture derived from quant/limitup_ai Baostock daily_bar shape; not a redistributed dataset"
+  }
+]
+

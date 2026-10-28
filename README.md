@@ -4,7 +4,7 @@ CherryQuant 面向有交易经验但不会编程的普通 A 股投资者，帮�
 
 ## 当前状态
 
-仓库刚完成 M0 基线初始化：目前只有产品/工程契约和目录骨架，没有可用的回测引擎、界面或真实行情数据。任何收益结果都不能被视为已验证的策略表现。
+仓库已完成 M0，并有一个不依赖 UI、网络或外部数据源的 M1 确定性实验引擎。当前仍没有界面、真实行情接入或实盘能力；任何合成数据收益都不能被视为已验证的策略表现。
 
 ## MVP 闭环
 
@@ -17,9 +17,9 @@ CherryQuant 面向有交易经验但不会编程的普通 A 股投资者，帮�
 ## 目录
 
 ```text
-apps/web/             前端（后续建立）
-apps/api/             HTTP/API 层（后续建立）
-packages/engine/      规则校验、指标、事件和成交模拟
+apps/web/             前端（M2 建立）
+apps/api/             HTTP/API 层（M2 建立）
+packages/engine/      M1 规则、指标、事件和成交模拟
 contracts/            跨层数据契约与示例
 fixtures/             可人工核对的合成数据和黄金样本
 tests/                单元、契约和端到端测试
@@ -62,5 +62,52 @@ docs/decisions/       可追溯的产品与工程决策
 
 ## 本地开发
 
-实际安装命令、测试命令和运行命令将在 M1 选定技术栈并提交首个可运行引擎时补齐。当前仓库没有可启动的应用，这是有意保留的状态，不应把空目录误认为已完成产品。
+### 运行 M1 测试
+
+```bash
+python -m pip install -e packages/engine
+python -m pytest
+```
+
+### 在 Python 中运行一次实验
+
+```python
+from decimal import Decimal
+from pathlib import Path
+
+from cherryquant_engine import (
+    CloseAboveSMA,
+    CloseBelowSMA,
+    DataSnapshot,
+    ExperimentConfig,
+    StrategySpec,
+    bars_from_records,
+    read_json_records,
+    run_experiment,
+)
+
+records = read_json_records(Path("fixtures/synthetic_daily.json"))
+snapshot = DataSnapshot(
+    source="cherryquant.synthetic",
+    frequency="1d",
+    symbol="600000.SH",
+    bars=bars_from_records(records),
+)
+strategy = StrategySpec(
+    version_id="demo-v1",
+    entry_condition=CloseAboveSMA(2),
+    exit_condition=CloseBelowSMA(2),
+    position_fraction=Decimal("0.5"),
+)
+result = run_experiment(snapshot, strategy, ExperimentConfig())
+print(result.to_dict()["summary"])
+```
+
+也可以直接运行仓库里的演示脚本：
+
+```bash
+python scripts/run_m1_demo.py
+```
+
+测试命令使用仓库根目录的 `pyproject.toml`，会自动把 `packages/engine/src` 加入测试路径。M1 当前使用 JSON 合成样本；真实 Parquet/Provider 接入留到后续数据层，不把旧项目的原始文件或网络凭证带入仓库。
 

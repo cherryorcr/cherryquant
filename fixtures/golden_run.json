@@ -1,0 +1,16 @@
+{
+  "status": "COMPLETED",
+  "summary": {
+    "trade_count": 1,
+    "filled_order_count": 2,
+    "not_filled_order_count": 0,
+    "realized_pnl": "-2896.046000",
+    "final_equity": "97103.954000",
+    "total_return": "-0.02896046"
+  },
+  "fills": [
+    {"date": "20260105", "side": "buy", "price": "10.60", "quantity": 4700},
+    {"date": "20260107", "side": "sell", "price": "10.00", "quantity": 4700}
+  ]
+}
+
