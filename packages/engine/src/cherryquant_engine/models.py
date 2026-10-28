@@ -170,6 +170,37 @@ class DataSnapshot:
             "bars": [bar.to_dict() for bar in self.bars],
         }
 
+    def for_scope(self, scope: str) -> "DataSnapshot":
+        """Return a snapshot restricted to an explicit research scope.
+
+        The full snapshot may contain a later holdout interval, but callers can
+        pass the research-scoped copy to the engine so results and explanations
+        cannot accidentally expose values from a locked interval.
+        """
+        if scope == "full":
+            return self
+        if scope == "research":
+            if self.research_end is None:
+                raise ValueError("research scope is unavailable without research_end")
+            bars = tuple(bar for bar in self.bars if bar.date <= self.research_end)
+        elif scope == "holdout":
+            if self.holdout_start is None:
+                raise ValueError("holdout scope is unavailable without holdout_start")
+            bars = tuple(bar for bar in self.bars if bar.date >= self.holdout_start)
+        else:
+            raise ValueError(f"unsupported snapshot scope: {scope}")
+        return DataSnapshot(
+            source=self.source,
+            frequency=self.frequency,
+            symbol=self.symbol,
+            bars=bars,
+            price_basis=self.price_basis,
+            research_start=self.research_start,
+            research_end=self.research_end,
+            holdout_start=self.holdout_start,
+            holdout_end=self.holdout_end,
+        )
+
 
 @dataclass(frozen=True)
 class StrategySpec:

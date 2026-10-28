@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CherryQuant · M2 规则实验</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">CHERRYQUANT / M2</p>
+          <h1>把一条交易想法跑清楚</h1>
+          <p class="subtitle">规则由你确认，计算由确定性引擎完成。当前使用演示合成数据，保留区间保持锁定。</p>
+        </div>
+        <div id="connection" class="status-pill">连接中…</div>
+      </header>
+
+      <section class="grid two-columns">
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">RULE CARD</p>
+              <h2>规则卡片</h2>
+            </div>
+            <span id="dataset-note" class="muted">读取数据中…</span>
+          </div>
+          <form id="strategy-form">
+            <label>版本 ID<input name="version_id" value="web-v1" required /></label>
+            <div class="form-row">
+              <label>入场条件
+                <select name="entry_type">
+                  <option value="close_above_sma">收盘价高于均线</option>
+                  <option value="close_crosses_above_sma">收盘价上穿均线</option>
+                </select>
+              </label>
+              <label>均线周期<input name="entry_period" type="number" min="1" value="2" required /></label>
+            </div>
+            <div class="form-row">
+              <label>退出条件
+                <select name="exit_type">
+                  <option value="close_below_sma">收盘价低于均线</option>
+                  <option value="close_crosses_below_sma">收盘价下穿均线</option>
+                </select>
+              </label>
+              <label>均线周期<input name="exit_period" type="number" min="1" value="2" required /></label>
+            </div>
+            <div class="form-row">
+              <label>资金使用比例<input name="position_fraction" type="number" min="0.01" max="1" step="0.01" value="0.5" required /></label>
+              <label>最小交易手数<input name="lot_size" type="number" min="1" step="1" value="100" required /></label>
+            </div>
+            <label class="checkbox"><input name="confirmed" type="checkbox" /> 我已确认系统将按“收盘观察、下一交易日开盘尝试成交”执行</label>
+            <div class="actions">
+              <button id="validate-button" type="button" class="secondary">检查规则</button>
+              <button id="run-button" type="submit">运行实验</button>
+            </div>
+          </form>
+          <div id="rule-feedback" class="feedback muted">填写规则后先检查，再运行。</div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">RUN SUMMARY</p>
+              <h2>实验结果</h2>
+            </div>
+            <span id="run-id" class="muted">尚未运行</span>
+          </div>
+          <div id="summary" class="summary-grid empty-state">运行后显示摘要</div>
+          <div class="lock-note"><span>研究区间</span><strong id="research-range">—</strong><span class="lock">保留区间已锁定</span><strong id="holdout-range">—</strong></div>
+        </article>
+      </section>
+
+      <section class="panel chart-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">PRICE &amp; DECISIONS</p>
+            <h2>K 线 / 决策联动</h2>
+          </div>
+          <span class="muted">标记来自同一次运行的 DecisionTrace</span>
+        </div>
+        <svg id="chart" viewBox="0 0 900 300" role="img" aria-label="收盘价和决策标记"></svg>
+        <div class="legend"><span><i class="dot entry"></i>入场信号</span><span><i class="dot exit"></i>退出信号</span><span><i class="dot fill"></i>成交日</span></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">DECISION TRACE</p>
+            <h2>逐日解释</h2>
+          </div>
+          <span class="muted">无信号日期也会保留判断状态</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>日期</th><th>入场条件</th><th>退出条件</th><th>信号</th><th>订单/成交</th><th>解释</th></tr></thead>
+            <tbody id="trace-table"><tr><td colspan="6" class="empty-state">运行后显示逐日记录</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div id="error" class="error" hidden></div>
+    </main>
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
+

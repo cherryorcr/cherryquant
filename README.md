@@ -31,7 +31,7 @@ docs/decisions/       可追溯的产品与工程决策
 
 1. M0：仓库、契约、范围和交易假设。
 2. M1：不依赖 UI 的可核验引擎与合成数据。
-3. M2：数据选择、规则卡片、运行、K 线和逐日解释。
+3. M2：数据选择、规则卡片、运行、K 线和逐日解释（当前已提供 API 和无构建依赖演示页）。
 4. M3：版本、修改理由、受控比较、保存恢复和检验区间记录。
 5. M4：小范围受控试用，区分软件理解问题、数据问题和策略问题。
 
@@ -109,5 +109,21 @@ print(result.to_dict()["summary"])
 python scripts/run_m1_demo.py
 ```
 
-测试命令使用仓库根目录的 `pyproject.toml`，会自动把 `packages/engine/src` 加入测试路径。M1 当前使用 JSON 合成样本；真实 Parquet/Provider 接入留到后续数据层，不把旧项目的原始文件或网络凭证带入仓库。
+测试命令使用仓库根目录的 `pyproject.toml`，会自动把 `packages/engine/src` 和 `apps/api/src` 加入测试路径。M1/M2 当前使用 JSON 合成样本；真实 Parquet/Provider 接入留到后续数据层，不把旧项目的原始文件或网络凭证带入仓库。
+
+### 启动 M2 API 和演示页
+
+```bash
+python -m pip install -e packages/engine
+python -m pip install -e apps/api
+uvicorn cherryquant_api.app:app --reload --port 8000
+```
+
+另开终端：
+
+```bash
+python -m http.server 5173 --directory apps/web
+```
+
+打开 <http://127.0.0.1:5173>。页面会调用 API，展示规则卡片、研究区间、K 线、成交标记和逐日解释。
 

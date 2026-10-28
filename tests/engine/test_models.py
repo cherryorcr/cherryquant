@@ -34,3 +34,9 @@ def test_snapshot_content_hash_is_stable(synthetic_snapshot: DataSnapshot) -> No
         bars=synthetic_snapshot.bars,
     ).content_hash
 
+
+def test_research_scope_excludes_holdout_bars(synthetic_snapshot: DataSnapshot) -> None:
+    scoped = synthetic_snapshot.for_scope("research")
+    assert [bar.date for bar in scoped.bars] == ["20260101", "20260102", "20260105"]
+    assert scoped.content_hash != synthetic_snapshot.content_hash
+

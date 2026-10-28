@@ -1,5 +1,5 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["packages/engine/src"]
+pythonpath = ["packages/engine/src", "apps/api/src"]
 addopts = "-q"
 
