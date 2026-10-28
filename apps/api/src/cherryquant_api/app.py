@@ -89,7 +89,7 @@ class StrategyDraftRequest(BaseModel):
 
     prompt: str = Field(min_length=8, max_length=4000)
     dataset_id: Literal["demo-synthetic"] = "demo-synthetic"
-    symbol: str = "600000.SH"
+    symbol: Literal["600000.SH"] = "600000.SH"
     candidate_count: int = Field(default=3, ge=1, le=3)
 
 

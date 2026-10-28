@@ -39,7 +39,7 @@
           <textarea id="strategy-prompt" rows="7" placeholder="例如：我想验证一只股票在收盘站上中期均线后买入，跌破均线后退出，先用固定仓位看看它如何运行。">我想验证一只股票在收盘站上中期均线后买入，跌破均线后退出，先用固定仓位看看它如何运行。</textarea>
           <div class="prompt-footer"><span id="prompt-count">0 / 4000</span><span>只描述想法，不要粘贴密钥或账户信息。</span></div>
           <div class="field-grid">
-            <label>标的<input id="symbol" value="600000.SH" autocomplete="off" /></label>
+            <label>演示标的（固定）<input id="symbol" value="600000.SH" autocomplete="off" readonly /></label>
             <label>候选数量<select id="candidate-count"><option value="3">3 个候选</option><option value="2">2 个候选</option><option value="1">1 个候选</option></select></label>
           </div>
           <button id="generate-button" class="primary-button" type="button"><span class="button-icon">✦</span>生成候选规则</button>

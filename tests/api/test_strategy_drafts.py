@@ -54,6 +54,14 @@ def test_short_prompt_is_rejected() -> None:
     assert response.status_code == 422
 
 
+def test_demo_draft_rejects_symbol_outside_fixed_fixture() -> None:
+    response = client.post(
+        "/v1/strategy-drafts",
+        json={"prompt": "验证一条均线趋势规则", "symbol": "000001.SZ"},
+    )
+    assert response.status_code == 422
+
+
 def _minimal_ir(**overrides: object) -> StrategyIR:
     values: dict[str, object] = {
         "objective": "test",
